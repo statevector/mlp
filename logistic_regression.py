@@ -9,23 +9,29 @@ class Logistic_Regression():
 		self.inputLayerSize = 3
 		self.outputLayerSize = 1
 		# model parameters
-		self.W = np.random.randn(self.inputLayerSize)
-		self.b = np.random.randn(1)
+		self.W = np.random.randn(self.inputLayerSize + 1) # include bias term
 
 	def parameters(self):
 		print(" input size: {}\n output size: {}\n weights: {}\n".format(
 			self.inputLayerSize, self.outputLayerSize, self.W))
 
+	# 2x3 * 1x3
+	# 2x4 * 1x4
+
 	# push input through network
+	# vector in scalar out (matrix in vector out)
 	def forward(self, X):
-		print('W', self.W)
-		print('b', self.b)
-		print('X', X)
-		print('XW', np.dot(X, self.W))
-		print('XW+b', np.dot(X, self.W) + self.b) # this is broadcasting
-		print('yhat', self.sigmoid(np.dot(X, self.W) + self.b))
+		ones = np.ones([X.shape[0],1])
+		X = np.append(ones, X, axis=1)
+		#print('W', self.W)
+		#print('b', self.b)
+		#print('X', X)
+		#print('XW', np.dot(X, self.W.T))
+		#print('XW+b', np.dot(X, self.W.T) + self.b) # this is broadcasting
+		#print('yhat', self.sigmoid(np.dot(X, self.W.T) + self.b))
 		#yhat = self.sigmoid(np.dot(X, self.W) + self.b)
-		return self.sigmoid(np.dot(X, self.W) + self.b)
+		#return self.sigmoid(np.dot(X, self.W.T) + self.b)
+		return self.sigmoid(np.dot(X, self.W.T))
 
 	def sigmoid(self, z):
 		return 1 / (1 + np.exp(-z))
@@ -50,7 +56,9 @@ class Logistic_Regression():
 	# compute gradient of cost function wrt W and b
 	# should have same number of elements as cols j in X
 	def costFunctionGradient(self, X, y):
-		yhat = self.forward(X)
+		yhat = self.forward(X) # do this first
+		ones = np.ones([X.shape[0],1]) 
+		X = np.append(ones, X, axis = 1)
 		#print(np.dot((yhat - y).T, X))
 		return 1/len(X) * np.dot((yhat-y).T, X)
 
@@ -103,7 +111,7 @@ if __name__ == '__main__':
 	print('cool')
 
 	J = lr.costFunction(x, y)
-	#print(J)
+	print(J)
 
 	dJ = lr.costFunctionGradient(x, y)
 	print(dJ)
