@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class LogisticRegression():
 
-	def __init__(self, X, y):
+	def __init__(self):
 		# set model hyper parameters: 
 		# initialize weights with gaussian random numbers, include bias term with +1
 		self.inputLayerSize = 3
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 	#y.shape = (2, 1)
 	print('y: {} \ny.shape {}:'.format(y, y.shape))
 
-	lr = LogisticRegression(x, y)
+	lr = LogisticRegression()
 
 	# predict X
 	yhat = lr.forward(x)
@@ -157,9 +157,11 @@ if __name__ == '__main__':
 	J = lr.costFunction(x, y)
 	print('cost: ', J)
 
+	# compute gradients
 	dJ = lr.costFunctionGradient(x, y)
 	print('grad: ', dJ)
 
+	# fit model parameters to the data
 	result = lr.train(x, y)
 	print('result: ', result)
 
@@ -179,7 +181,7 @@ if __name__ == '__main__':
 	# plot the results
 	xvar = np.arange(0, len(lr.J), 1)
 	yvar = lr.J
-	
+
 	plt.plot(xvar, yvar, 'r--')
 	plt.xlabel('Iterations')
 	plt.ylabel('Cost')
