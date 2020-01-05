@@ -8,7 +8,7 @@ class LinearRegression():
 	def __init__(self):
 		# set model hyper parameters: 
 		# initialize weights with gaussian random numbers, include bias term with +1
-		self.inputLayerSize = 1 # coefficients
+		self.inputLayerSize = 2 # beta coefficients
 		self.W = np.random.randn(self.inputLayerSize + 1)
 		# empty list to store callback costs
 		self.J = []
@@ -21,14 +21,6 @@ class LinearRegression():
 		#print('X: {} \nX.shape {}:'.format(X, X.shape))
 		#print('W: {} \nW.shape {}:'.format(self.W, self.W.shape))		
 		return np.matmul(self.W, X.T) # I think it goes like [1,k] x [n,k].T ~ [1,n]
-
-	# compute sigmoid function
-	def sigmoid(self, z):
-		return 1 / (1 + np.exp(-z))
-
-	# compute derivative of sigmoid function
-	def sigmoidPrime(self, z):
-		return self.sigmoid(z) * (1 - self.sigmoid(z))
 
 	# mean squared error loss
 	def costFunction(self, X, y):
@@ -112,34 +104,21 @@ class LinearRegression():
 
 if __name__ == '__main__':
 
-	#data = pd.read_csv('data/HTRU_2.csv', header = None)
-	#x = data[[0,1,2,3,4,5,6,7]].values # normalize this...
-	#y = data[[8]].values
-
-	# feature matrix X
-	#x = np.array([[1.0, 2.0, 3.0], 
-	#			  [1.1, 2.2, 3.3],
-	#			  [0.9, 1.9, 2.9],
-	#			  [-1, -2, -3]])
+	# features
+	x1 = np.random.uniform(low=1, high=10, size=100)
+	x2 = np.random.uniform(low=1, high=10, size=100)
 	#print('X: {} \nX.shape {}:'.format(x, x.shape))
 
 	# target labels y
-	#y = np.array([1.0, 1.1, 0.9, -1])
-	#print('y: {} \ny.shape {}:'.format(y, y.shape))
-
-
-
-
-
-	# feature matrix X
-	x = np.random.uniform(low=1, high=10, size=10)
-	print('X: {} \nX.shape {}:'.format(x, x.shape))
-
-	# target labels y
-	y = 7000*x + 30000 + np.random.normal(loc=0, scale=10000, size=10)
+	#y = 7000*x + 30000 + np.random.normal(loc=0, scale=10000, size=10)
+	beta1 = 7000
+	beta2 = 5000
+	y = beta1*x1 + beta2*x2 + 30000 + np.random.normal(loc=0, scale=1000, size=100)
 	print('y: {} \ny.shape {}:'.format(y, y.shape))
 
-	x.shape = (x.shape[0], 1)
+	# feature matrix X
+	x = np.vstack((x1,x2)).T
+	#x.shape = (x.shape[0], 1)
 	print('X: {} \nX.shape {}:'.format(x, x.shape))
 
 	lr = LinearRegression()
@@ -160,16 +139,6 @@ if __name__ == '__main__':
 	result = lr.train(x, y)
 	print('result: ', result)
 
-	# check if never before seen test case works
-	#x_test = np.array([0.8, 1.8, 2.8]).reshape(1,3)
-	#print('X: {} \nX.shape {}:'.format(x_test, x_test.shape))
-	#test = lr.forward(x_test)
-	#print(test)
-
-	# alternative training algorithm
-	#lr.resetWeights()
-	#lr.gradient_descent(x, y)
-
 	# result of callback function... annoyingly missing initial cost function eval...
 	print('costs: ', lr.J)
 
@@ -183,5 +152,21 @@ if __name__ == '__main__':
 	plt.title('Cost vs. BFGS Iterations')
 	plt.xticks(xvar)
 	plt.show()
+
+	plt.plot(x1, y, 'r+')
+	plt.xlabel('x1')
+	plt.ylabel('y')
+	plt.title('y vs. x1')
+	#plt.xticks(x1)
+	plt.show()
+
+	plt.plot(x2, y, 'b+')
+	plt.xlabel('x2')
+	plt.ylabel('y')
+	plt.title('y vs. x2')
+	#plt.xticks(x1)
+	plt.show()
+
+
 
 
