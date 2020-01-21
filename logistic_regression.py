@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 from scipy import optimize
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
-np.random.seed(1234)
+np.random.seed(12345)
 
 class LogisticRegression():
 
@@ -12,54 +12,51 @@ class LogisticRegression():
 		# initialize weights with gaussian random numbers, include bias term with +1
 		self.inputLayerSize = 3
 		self.W = np.random.randn(self.inputLayerSize + 1) # 1D array
-		#self.W = np.array([0.09302552, 1.29829595, 2.29181623, 2.43873838]) # min
-		#self.W = np.array([-0.43539474,  1.31641954, 2.32551838,  2.48801908]) # another min
 		#self.W = np.array([1, -1, -1, 1]) # test
 		self.orig = self.W
 		# empty list to store callback costs
 		self.J = []
 
 	def resetWeights(self):
-		#print('self.W:', self.W)
-		#print('self.orig', self.orig)
 		self.W = self.orig
+
+	# sigmoid activation function
+	def sigmoid(self, z):
+		'''
+		z: a scalar, vector, or matrix
+		'''
+		return 1 / (1 + np.exp(-z))
+
+	# derivative of sigmoid function
+	def sigmoidPrime(self, z):
+		'''
+		z: a scalar, vector, or matrix
+		'''
+		return self.sigmoid(z) * (1 - self.sigmoid(z))
 
 	# propagate input through the network
 	# vector in scalar out (or feature matrix in vector out)
-	def forward(self, X):
+	def forward(self, X, verbose=False):
 		ones = np.ones([X.shape[0], 1])
 		X = np.append(ones, X, axis = 1)
-		#print('X: {} \nX.shape {}:'.format(X, X.shape))
-		#print('W: {} \nW.shape {}:'.format(self.W, self.W.shape))
-		#print('WXT', np.matmul(self.W, X.T))
-		return self.sigmoid(np.matmul(self.W, X.T)) # I think it goes like [1,k] x [n,k].T ~ [1,n]
-
-	# compute sigmoid function
-	def sigmoid(self, z):
-		return 1 / (1 + np.exp(-z))
-
-	# compute derivative of sigmoid function
-	def sigmoidPrime(self, z):
-		return self.sigmoid(z) * (1 - self.sigmoid(z))
-
-	# mean squared error loss
-	#def costFunction(self, X, y):
-	#	yhat = self.forward(X)
-	#   N = X.shape[0]
-	#	return 1/(2*N) * np.sum((yhat - y) ** 2)
+		if verbose:
+			print('X: {}, X.shape {}:'.format(X, X.shape))
+			print('W: {}, W.shape {}:'.format(self.W, self.W.shape))
+			print('WXt: {}:'.format(np.matmul(self.W, X.T)))
+		output = self.sigmoid(np.matmul(self.W, X.T)) # goes like [1,k] x [n,k].T ~ [1,n]
+		return output
 
 	# binary cross entropy loss
 	# return single scalar value from vector of targets and predictions
-	# use negative log likelihood here for minimization (i.e. max likelihood)
+	# this is the negative log likelihood for N observations
 	def costFunction(self, X, y):
 		yhat = self.forward(X)
 		N = X.shape[0]
-		J = - (1/N) * (np.matmul(y, np.log(yhat)) + np.matmul(1-y, np.log(1-yhat)))
-		return J
+		cost = - (1/N) * (np.matmul(y, np.log(yhat)) + np.matmul(1-y, np.log(1-yhat)))
+		return cost
 
 	# compute gradient of cost function wrt W and b parameters
-	# will have same number of elements as columns k in X
-	# same gradient result as with MSE loss!
+	# has same number of elements as columns k in X_jk
 	def costFunctionGradient(self, X, y):
 		yhat = self.forward(X)
 		ones = np.ones([X.shape[0], 1])
@@ -68,41 +65,35 @@ class LogisticRegression():
 		grad = (1/N) * np.matmul((yhat - y).T, X) # [n,1].T x [n,k] ~ [1,k]
 		return grad
 
+	# used with scipy minimization
 	def objectiveFunction(self, x, *args):
 		X, y = args[0], args[1]
-		self.W = x # update parameters
+		# update model parameters
+		self.W = x
+		# recompute cost and gradient
 		cost = self.costFunction(X, y)
 		grad = self.costFunctionGradient(X, y)
-		#print(cost) # easy callback
 		return cost, grad
 
 	def callbackFunction(self, x):
-		#print(self.costFunction(self.X, self.y))
 		self.J.append(self.costFunction(self.X, self.y))
-		
+	
 	def train(self, X, y):
-
-		# internal variables for the callback function
+		'''
+		X: a feature matrix of training data
+		y: a vector of associated target labels
+		'''
+		# callback variables
 		self.X = X
 		self.y = y
-		
-		# starting values for parameters
-		x0 = self.W
-		print('x0:', x0, x0.shape)
-
-		# If 'jac' is set to 'True', then fun is assumed to return
-		# the objective function along with the gradient
 		res = optimize.minimize(fun = self.objectiveFunction, 
-			x0 = x0,
-			args = (X, y), # extra args passed to the objective function
-			jac = True, 
+			x0 = self.W,   # starting values for model weights
+			args = (X, y), # extra args passed to the objective
+			jac = True,    # if TRUE, then objective returns both cost and grad
 			method = 'BFGS', 
 			callback = self.callbackFunction,
 			options = {'maxiter' : 1000, 'disp' : True})
-		
-		# update parameters with the final optimized result
 		self.W = res.x
-
 		return res
 
 	def gradient_descent(self, X, y, alpha=0.3, max_iters=100000):
@@ -155,34 +146,34 @@ if __name__ == '__main__':
 	print('dJ: {} \ndJ.shape {}:'.format(dJ, dJ.shape))
 
 	# fit model parameters to the data
+	print('performing BFGS optimization:')
 	result = lr.train(x, y)
 	print('result: ', result)
+
+	# result of callback function... annoyingly missing initial cost function eval...
+	print('costs: ', lr.J, len(lr.J))
+
+	# plot the results
+	xvar = np.arange(0, len(lr.J), 1)
+	yvar = lr.J
+	plt.plot(xvar, yvar, 'r--')
+	plt.xlabel('Iterations')
+	plt.ylabel('Cost')
+	plt.title('Cost vs. BFGS Iterations')
+	plt.xticks(xvar)
+	plt.show()
+
+	# alternate training algorithm
+	print('performing gradient descent:')
+	print('W: {} \nW.shape {}:'.format(lr.W, lr.W.shape))
+	lr.resetWeights()
+	lr.gradient_descent(x, y)
 
 	# check if never before seen test case works
 	#x_test = np.array([0.8, 1.8, 2.8]).reshape(1,3)
 	#print('X: {} \nX.shape {}:'.format(x_test, x_test.shape))
 	#test = lr.forward(x_test)
 	#print(test)
-
-	# result of callback function... annoyingly missing initial cost function eval...
-	#print('costs: ', lr.J)
-
-	# plot the results
-	#xvar = np.arange(0, len(lr.J), 1)
-	#yvar = lr.J
-	# plt.plot(xvar, yvar, 'r--')
-	# plt.xlabel('Iterations')
-	# plt.ylabel('Cost')
-	# plt.title('Cost vs. BFGS Iterations')
-	# plt.xticks(xvar)
-	# plt.show()
-
-	print('performing gradient descent:')
-	# alternative training algorithm
-	#lr.resetWeights()
-	lr.resetWeights()
-	print('W: {} \nW.shape {}:'.format(lr.W, lr.W.shape))
-	lr.gradient_descent(x, y)
 
 
 
