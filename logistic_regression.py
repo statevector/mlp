@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 from scipy import optimize
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+
+np.random.seed(1234)
 
 class LogisticRegression():
 
@@ -48,19 +50,23 @@ class LogisticRegression():
 
 	# binary cross entropy loss
 	# return single scalar value from vector of targets and predictions
+	# use negative log likelihood here for minimization (i.e. max likelihood)
 	def costFunction(self, X, y):
 		yhat = self.forward(X)
 		N = X.shape[0]
-		return -1/N * (np.matmul(y.T, np.log(yhat)) + np.matmul(1-y.T, np.log(1-yhat)))
+		J = - (1/N) * (np.matmul(y, np.log(yhat)) + np.matmul(1-y, np.log(1-yhat)))
+		return J
 
 	# compute gradient of cost function wrt W and b parameters
 	# will have same number of elements as columns k in X
+	# same gradient result as with MSE loss!
 	def costFunctionGradient(self, X, y):
 		yhat = self.forward(X)
 		ones = np.ones([X.shape[0], 1])
 		X = np.append(ones, X, axis = 1)
 		N = X.shape[0]
-		return 1/N * np.matmul((yhat - y).T, X) # [n,1].T x [n,k] ~ [1,k]
+		grad = (1/N) * np.matmul((yhat - y).T, X) # [n,1].T x [n,k] ~ [1,k]
+		return grad
 
 	def objectiveFunction(self, x, *args):
 		X, y = args[0], args[1]
@@ -99,33 +105,19 @@ class LogisticRegression():
 
 		return res
 
-	def gradient_descent(self, X, y):
-	
-		rate = 0.1
-		print('Rate {}:'.format(rate))
-
-		n = 0
-		print('Epoch {}:'.format(n))
-		print("loss: {}".format(self.costFunction(X, y)))
-
-		# Perform a gradient descent algorithm
-		#while self.costFunction(X, y) > 0.01 and n < 10000:
-		while n < 1000000:
-			n = n + 1
-			loss = self.costFunction(X, y)
-			W_new = self.W - rate * self.costFunctionGradient(X, y)
-			self.W = W_new
-			#print(self.W)
-			#print(n, self.costFunction(X, y))
-			#if (np.abs(loss - self.costFunction(X, y))/loss < 1e-6) and (loss < 2e-6):
-			if (loss < 2e-6):
-				print(loss, self.costFunction(X, y))
-				break
-
-		print("Epoch {}:".format(n))
-		print("loss: {}".format(self.costFunction(X, y)))
+	def gradient_descent(self, X, y, alpha=0.3, max_iters=100000):
+		'''
+		X: a feature matrix of training data
+		y: a vector of associated target labels
+		alpha: the gradient descent learning rate
+		max_iters: the max number of gradient descent iterations
+		'''
+		print('Learning Rate {}:'.format(alpha))
+		for i in range(max_iters):
+			self.W = self.W - alpha * self.costFunctionGradient(X, y)
+			if i%10000 == 0:
+				print('Epoch {}, loss {}:'.format(i, self.costFunction(X, y)))
 		print("W: {}".format(self.W))
-
 
 if __name__ == '__main__':
 
@@ -148,6 +140,7 @@ if __name__ == '__main__':
 	print('y: {} \ny.shape {}:'.format(y, y.shape))
 
 	lr = LogisticRegression()
+	print('W: {} \nW.shape {}:'.format(lr.W, lr.W.shape))
 
 	# predict X
 	yhat = lr.forward(x)
@@ -155,11 +148,11 @@ if __name__ == '__main__':
 
 	# compute cost function
 	J = lr.costFunction(x, y)
-	print('cost: ', J)
+	print('J: {} \nJ.shape {}:'.format(J, J.shape))
 
 	# compute gradients
 	dJ = lr.costFunctionGradient(x, y)
-	print('grad: ', dJ)
+	print('dJ: {} \ndJ.shape {}:'.format(dJ, dJ.shape))
 
 	# fit model parameters to the data
 	result = lr.train(x, y)
@@ -171,23 +164,27 @@ if __name__ == '__main__':
 	#test = lr.forward(x_test)
 	#print(test)
 
-	# alternative training algorithm
-	#lr.resetWeights()
-	#lr.gradient_descent(x, y)
-
 	# result of callback function... annoyingly missing initial cost function eval...
-	print('costs: ', lr.J)
+	#print('costs: ', lr.J)
 
 	# plot the results
-	xvar = np.arange(0, len(lr.J), 1)
-	yvar = lr.J
+	#xvar = np.arange(0, len(lr.J), 1)
+	#yvar = lr.J
+	# plt.plot(xvar, yvar, 'r--')
+	# plt.xlabel('Iterations')
+	# plt.ylabel('Cost')
+	# plt.title('Cost vs. BFGS Iterations')
+	# plt.xticks(xvar)
+	# plt.show()
 
-	plt.plot(xvar, yvar, 'r--')
-	plt.xlabel('Iterations')
-	plt.ylabel('Cost')
-	plt.title('Cost vs. BFGS Iterations')
-	plt.xticks(xvar)
-	plt.show()
+	print('performing gradient descent:')
+	# alternative training algorithm
+	#lr.resetWeights()
+	lr.resetWeights()
+	print('W: {} \nW.shape {}:'.format(lr.W, lr.W.shape))
+	lr.gradient_descent(x, y)
+
+
 
 
 
