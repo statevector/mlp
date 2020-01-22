@@ -8,7 +8,6 @@ np.random.seed(1235)
 
 class LogisticRegression():
 
-	# set model hyper parameters: 
 	def __init__(self, nfeatures):
 		# initialize weights with gaussian random numbers
 		# bias term incliuded with +1
@@ -128,20 +127,9 @@ if __name__ == '__main__':
 	X = (X - np.mean(X, axis=0))/np.std(X, axis=0)
 	nfeatures = X.shape[1]
 
+	# initialize model
 	lr = LogisticRegression(nfeatures=nfeatures)
 	print('W: {} \nW.shape {}:'.format(lr.W, lr.W.shape))
-
-	# predict X
-	yhat = lr.forward(X)
-	print('yhat:', yhat)
-
-	# compute cost function
-	J = lr.costFunction(X, y)
-	print('J: {} \nJ.shape {}:'.format(J, J.shape))
-
-	# compute gradients
-	dJ = lr.costFunctionGradient(X, y)
-	print('dJ: {} \ndJ.shape {}:'.format(dJ, dJ.shape))
 
 	# fit model parameters W according to data (X,y)
 	print('performing BFGS optimization:')
