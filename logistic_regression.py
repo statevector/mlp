@@ -3,16 +3,16 @@ import pandas as pd
 from scipy import optimize
 import matplotlib.pyplot as plt
 
-np.random.seed(12345)
+#np.random.seed(1234)
+np.random.seed(1235)
 
 class LogisticRegression():
 
-	def __init__(self):
-		# set model hyper parameters: 
-		# initialize weights with gaussian random numbers, include bias term with +1
-		self.inputLayerSize = 3
-		self.W = np.random.randn(self.inputLayerSize + 1) # 1D array
-		#self.W = np.array([1, -1, -1, 1]) # test
+	# set model hyper parameters: 
+	def __init__(self, nfeatures):
+		# initialize weights with gaussian random numbers
+		# bias term incliuded with +1
+		self.W = np.random.randn(nfeatures + 1) # 1D array
 		self.orig = self.W
 		# empty list to store callback costs
 		self.J = []
@@ -96,7 +96,7 @@ class LogisticRegression():
 		self.W = res.x
 		return res
 
-	def gradient_descent(self, X, y, alpha=0.3, max_iters=100000):
+	def gradient_descent(self, X, y, alpha=0.3, max_iters=5000):
 		'''
 		X: a feature matrix of training data
 		y: a vector of associated target labels
@@ -106,51 +106,49 @@ class LogisticRegression():
 		print('Learning Rate {}:'.format(alpha))
 		for i in range(max_iters):
 			self.W = self.W - alpha * self.costFunctionGradient(X, y)
-			if i%10000 == 0:
+			if i%500 == 0:
 				print('Epoch {}, loss {}:'.format(i, self.costFunction(X, y)))
 		print("W: {}".format(self.W))
 
 if __name__ == '__main__':
 
-	#data = pd.read_csv('data/HTRU_2.csv', header = None)
-	#x = data[[0,1,2,3,4,5,6,7]].values # normalize this...
-	#y = data[[8]].values
+	# load the dataset
+	data = pd.read_csv('ex2data1.csv')
 
-	# feature matrix X
-	x = np.array([[1.0, 2.0, 3.0], 
-				  [1.1, 2.2, 3.3],
-				  [0.9, 1.9, 2.9],
-				  [-1, -2, -3]])
-	#x = np.array([1, 2, 3])
-	#x.shape = (3, 3)
-	print('X: {} \nX.shape {}:'.format(x, x.shape))
+	# extract the feature matrix X
+	X = data.drop(['y'], axis='columns').values
+	print('X: {} \nX.shape {}:'.format(X, X.shape))
+	print(X)
 
-	# target labels y
-	y = np.array([1, 1, 1, 0])
-	#y.shape = (2, 1)
+	# ... and target labels y
+	y = data['y'].values
 	print('y: {} \ny.shape {}:'.format(y, y.shape))
 
-	lr = LogisticRegression()
+	# normalize X for training
+	X = (X - np.mean(X, axis=0))/np.std(X, axis=0)
+	nfeatures = X.shape[1]
+
+	lr = LogisticRegression(nfeatures=nfeatures)
 	print('W: {} \nW.shape {}:'.format(lr.W, lr.W.shape))
 
 	# predict X
-	yhat = lr.forward(x)
+	yhat = lr.forward(X)
 	print('yhat:', yhat)
 
 	# compute cost function
-	J = lr.costFunction(x, y)
+	J = lr.costFunction(X, y)
 	print('J: {} \nJ.shape {}:'.format(J, J.shape))
 
 	# compute gradients
-	dJ = lr.costFunctionGradient(x, y)
+	dJ = lr.costFunctionGradient(X, y)
 	print('dJ: {} \ndJ.shape {}:'.format(dJ, dJ.shape))
 
-	# fit model parameters to the data
+	# fit model parameters W according to data (X,y)
 	print('performing BFGS optimization:')
-	result = lr.train(x, y)
+	result = lr.train(X, y)
 	print('result: ', result)
 
-	# result of callback function... annoyingly missing initial cost function eval...
+	# print result of callback function
 	print('costs: ', lr.J, len(lr.J))
 
 	# plot the results
@@ -163,11 +161,11 @@ if __name__ == '__main__':
 	plt.xticks(xvar)
 	plt.show()
 
-	# alternate training algorithm
+	# try gradient descent. Do we get same result as with BFGS? Yes!
 	print('performing gradient descent:')
 	print('W: {} \nW.shape {}:'.format(lr.W, lr.W.shape))
 	lr.resetWeights()
-	lr.gradient_descent(x, y)
+	lr.gradient_descent(X, y)
 
 	# check if never before seen test case works
 	#x_test = np.array([0.8, 1.8, 2.8]).reshape(1,3)
